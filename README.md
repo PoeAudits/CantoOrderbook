@@ -1,128 +1,126 @@
-# PoeAudits Chimera Template
+# Canto Free Public Orderbook:
 
-This is a version of Recon-Fuzz create-chimera-app I personalized for myself. It is free to use as is, and make sure to check out the original linked below.
+# Overview
 
-This is a work in progress and subject to change. 
+The PublicMarket contract form the main entrypoint for the set of smart contracts. They facilitate the creation, management, and execution of trading orders within a public marketplace. This documentation provides a detailed explanation of each contract's functions, parameters, and behaviors.
 
-A few of the changes I made:
+## Dependencies
+MatchingEngine: Inherits from SimpleMarket and contains the logic for matching user orders.
+SimpleMarket: Manages the storage and retrieval of orders, user balances, and market identifiers.
+StructuredLinkedList: A custom data structure for efficiently storing and retrieving orders.
+OrdersLib: Contains utility functions and definitions related to orders.
 
-- Removed the counter contracts
-- Replaced with a singleton contract to delegate call into implementations: Idea from https://www.youtube.com/watch?v=ZM6479HeI5U
-- Added foundry.toml settings I typically use
-    - verbosity 3
-    - ignored_error_codes
-    - localhost endpoint
-    - fuzz, invariant, fmt profiles
-- Added Makefile with some basic actions
-- Removed remappings
-    - My setup does not work with remappings and I prefer absolute imports
+## System Design
 
+The contract is designed using Vittorio Minacori's StructuredLinkedList library to create markets for each token pair. A linked list was chosen to allow for easy insertion of orders, as well as easy access to the head or lowest order in the orderbook. Each token pair is stored in a market, which is the keccak256 hash of the token addresses. You can determine the market identifier by calling the getMarket function in SimpleMarket.sol. The parameters of the getMarket function are the address of the token provided, and the address of the token desired, in that order. The order is important, because the reversed order is the market for the flipped token pair. For example, the market where one provides WCanto for Note is: getMarket(address(WCanto), address(Note)), and the market where one provides Note for WCanto is: getMarket(address(Note), address(WCanto)). 
 
-## Original https://github.com/Recon-Fuzz/create-chimera-app/tree/main
-## Create Chimera App
+When one creates an order on the orderbook, it will first check the reversed market pair to see if the order is immediately executable. If the order can be executed, it will, and any of the leftover order that cannot be executed will become an order in the orderbook. Orders will remain in the orderbook until they are filled, or canceled. Creating an order and making a market buy are very similar, however, in a market buy any leftover funds will be returned to the caller. A market buy will revert if it cannot be filled at the specified price. 
 
+An important consideration is that after an order is filled, the funds are not directly sent to the owner of the order. The funds need to be claimed from the contract using the withdraw or withdrawMany function. This is a security consideration to avoid callbacks and reentrancy. The withdraw function takes an address of the token to withdraw, and the withdrawMany takes an array of addresses. 
 
-- [Usage](#usage)
-- [Build](#build)
-- [Foundry Testing](#foundry-testing)
-- [Echidna Property Testing](#echidna-property-testing)
-- [Medusa Property Testing](#medusa-property-testing)
-- [Uploading Fuzz Job To Recon](#uploading-fuzz-job-to-recon)
+## Adding new token to the orderbook
 
-This Foundry template allows you to bootstrap a fuzz testing suite using a scaffolding provided by the [Recon](https://getrecon.xyz/) tool.
+You don't. You can immediately list a newly created token by it's address, no configuration needed. 
 
-It extends the default Foundry template used when running `forge init` to include example property tests using assertion tests and boolean property tests supported by [Echidna](https://github.com/crytic/echidna) and [Medusa](https://github.com/crytic/medusa).
+## PublicMarket Contract
 
-Broken properties can be turned into unit tests for easier debugging with Recon ([for Echidna](https://getrecon.xyz/tools/echidna)/[for Medusa](https://getrecon.xyz/tools/medusa)) and added to the `CryticToFoundry` contract.
+### Functions
 
-## Usage
-To initialize a new Foundry repo using this template run the following command in the terminal.
+#### makeOrderSimple
 
-```shell
-forge init --template https://github.com/Recon-Fuzz/create-chimera-app
-```
+Creates a simple trading order. 
 
-### Build
+Parameters:
+pay_tkn<address>: Address of the payment token. 
+pay_amt<uint256>: Amount of payment token to trade. Must have approval to transfer tokens from user.
+buy_tkn<address>: Address of the buying token.
+buy_amt<uint256>: Amount of buying token desired.
+Returns
+uint256: Order ID. 
 
-```shell
-forge build
-```
+#### makeOrderOnBehalf
 
-### Foundry Testing
+Creates a simple trading order for another address. Same as makeOrderSimple when recipient is msg.sender. Not for general use, but specific use cases when you need to create an order for another user. Funds come from caller, not recipient. 
 
-```shell
-forge test
-```
+Parameters:
+pay_tkn<address>: Address of the payment token. 
+pay_amt<uint256>: Amount of payment token to trade. Must have approval to transfer tokens from user.
+buy_tkn<address>: Address of the buying token.
+buy_amt<uint256>: Amount of buying token desired.
+recipient: The order's owner
+Returns
+uint256: Order ID. 
 
-This will run all unit, fuzz and invariant tests in the `CounterTest` and `CryticToFoundry` contracts.
+#### marketBuy
+Executes a market buy operation, attempting to purchase a specified amount of a token (buy_tkn) using another token (pay_tkn). The function calculates the best possible price based on the current market conditions.
 
-### Echidna Property Testing
+Parameters
+pay_tkn<address>: Address of the payment token. 
+pay_amt<uint256>: Amount of payment token to trade. Must have approval to transfer tokens from user.
+buy_tkn<address>: Address of the buying token.
+buy_amt<uint256>: Amount of buying token desired.
+Returns
+uint256: Remaining amount of pay_tkn after the transaction, if any.
 
-```shell
-echidna . --contract CryticTester --config echidna.yaml
-```
-Assertion mode is enabled by default in the echidna.yaml config file meaning the fuzzer will check assertion and property tests. 
+#### cancelOrder
+Cancels an existing order, returning any unfulfilled amounts to the order's creator.
 
-To test only in property mode enable `testMode: "property"` in [echidna.yaml](https://github.com/Recon-Fuzz/create-chimera-app/blob/main/echidna.yaml)).
+Parameters
+orderId<uint256>: ID of the order to cancel.
 
-### Medusa Property Testing
+#### withdraw
+Allows a user to withdraw their balance of a specific token from the contract. Tokens from fufilled orders are generally held by the contract and must be claimed.
 
-```shell
-medusa fuzz
-```
-Assertion mode is enabled by default in the medusa.json config file meaning the fuzzer will check assertion and property tests. 
+Parameters
+token<address>: Address of the token to withdraw.
 
-To test only in property mode disable assertion mode using:
+#### withdrawMany
+Permits a user to withdraw balances of multiple tokens at once. Tokens from fufilled orders are generally held by the contract and must be claimed.
 
-```json
-"assertionTesting": {
-    "enabled": true
-}  
-```
+Parameters
+tokens<address[]>: Array of addresses representing the tokens to withdraw.
 
-in [medusa.json](https://github.com/Recon-Fuzz/create-chimera-app/blob/main/medusa.json).
+#### getUserOrders
+Retrieves an array of orders which an address has active in the market.
 
-## Uploading Fuzz Job To Recon
+Parameters
+user<address>: The address of the user to retrieve data
+Returns
+An array of Order structs the user has in the market.
 
-You can offload your fuzzing job to Recon to run long duration jobs and share test results with collaborators using the [jobs page](https://getrecon.xyz/dashboard/jobs) on Recon:
+#### getMarketOrders
+Retrieves the top number of items in a market, providing details about the lowest-cost orders.
 
-#### Medusa
-1. Select Medusa as the job type using the radio buttons at the top of the page.
-2. Add the link for this repo in the *Enter GitHub Repo URL* form field (this will prefill the remaining form fields)
-<div align="center">
-    <img src="https://github.com/Recon-Fuzz/create-chimera-app/assets/94120714/9f9038f6-5f9f-4b0a-bdc0-ba6aedaaaded">
-</div>    
+Parameters
+pay_token<address>: Collateral token for the market.
+buy_token<address>: Token sought in exchange for the collateral.
+numItems<uint256>: Number of items to retrieve.
+Returns
+Two <uint256[]>: Pay amounts and buy amounts for the top market orders.
 
-2. Specify the `medusa.json` config file in the *Medusa config filename* field.
-<div align="center">
-  <img src="https://github.com/Recon-Fuzz/create-chimera-app/assets/94120714/5c2a2763-eff9-4ddf-aa1d-4835f93fc0f4">
-</div>
+## SimpleMarket.sol
+### Functions
 
-3. Optional: to override the `timeout` value in the Medusa config file for longer duration runs enter a value (in seconds) into the *Test Time Limit* field.
+#### userBalances
+Get the balance of a user for a specific token. Public mapping variable.
 
-### Echidna
-1. Select Echidna as the job type using the radio buttons at the top of the page.
-   
-2. Add the link for this repo in the *Enter GitHub Repo URL* form field (this will prefill the remaining form fields)
-<div align="center">
-    <img src="https://github.com/Recon-Fuzz/create-chimera-app/assets/94120714/3f9a0dec-60e1-4be7-86bf-fa5d1945c228">
-</div>    
+Parameters
+First address: User's address.
+Second address: Token's address
+mapping(address => mapping(address => uint256)) public userBalances;
 
-3. Add the following path to the test contract, config filename and test contract name to the corresponding form fields. Optional: to override the `timeout` and `testLimit` from the config file use the corresponding form fields.
-<div align="center">
-    <img src="https://github.com/Recon-Fuzz/create-chimera-app/assets/94120714/6f16e1ce-d753-4390-be3f-a60b40796a25">
-</div> 
+#### orders
+Get an order from an orderId. OrderIds are returned and emitted when creating an order. Public mapping variable. 
 
-***
+Parameters
+uint256: OrderId
+mapping(uint256 => OrdersLib.Order) public orders;
 
-4. Clicking the *Run Job* button will upload the job to Recon's cloud fuzz runner service. You'll see info about your job in the *Job Details* section and you'll be able to view your job in the *All Jobs* section.
-<div align="center">
-    <img src="https://github.com/Recon-Fuzz/create-chimera-app/assets/94120714/af3420bb-1dab-4be1-bcec-de429a729afe">
-</div> 
+#### getMarket 
+Get the bytes32 identifier for a market. 
 
-
-5. Clicking *View Details* button for a job lets you see the fuzzer logs and coverage report (only generated after the run is complete). You can share a fuzz run with any collaborators using the *Share Job Results* button.
-<div align="center">
-    <img src="https://github.com/Recon-Fuzz/create-chimera-app/assets/94120714/dd49627a-5875-4ed2-a59c-c02976a4562a">
-</div>
-  
+Parameters
+pay_token<address>: Collateral token for the market.
+buy_token<address>: Token sought in exchange for the collateral.
+Returns
+Bytes32 identifier for where the market is stored in storage.
