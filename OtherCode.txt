@@ -1,0 +1,473 @@
+    // /// @notice Get the top number of items in a market
+    // /// @param pay_token The collateral token for the market
+    // /// @param buy_token The token that is wanted for the provided collateral
+    // /// @param numItems The number of items to return IF less than market size
+    // /// @return OrdersLib.Order[] The array of the top market orders
+    // function getOrders(address pay_token, address buy_token, uint256 numItems)
+    //     external
+    //     view
+    //     returns (OrdersLib.Order[] memory)
+    // {
+    //     bytes32 market = getMarket(pay_token, buy_token);
+
+    //     StructuredLinkedList.List storage list = marketLists[market];
+
+    //     uint256 size = list.size;
+    //     if (numItems < size) {
+    //         size = numItems;
+    //     }
+
+    //     OrdersLib.Order[] memory returnOrders = new OrdersLib.Order[](size);
+
+    //     uint256 orderId;
+    //     for (uint256 i; i < size; ++i) {
+    //         (, orderId) = list.getAdjacent(orderId, true);
+    //         returnOrders[i] = orders[orderId];
+    //     }
+    //     return returnOrders;
+    // }
+
+
+
+
+
+
+Singleton.sol:
+
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
+
+import { SharedStorage } from "src/SharedStorage.sol";
+import { StructuredLinkedList, IStructureInterface } from "src/Libraries/StructuredLinkedList.sol";
+import { OrdersLib } from "src/Libraries/OrdersLib.sol";
+
+import { OrderModule } from "src/Modules/OrderModule.sol";
+import { MatchingModule } from "src/Modules/MatchingModule.sol";
+
+import { SafeERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import { SoladySafeCastLib } from "src/Libraries/SoladySafeCastLib.sol";
+
+contract Singleton is SharedStorage, IStructureInterface {
+  using StructuredLinkedList for StructuredLinkedList.List;
+  using OrdersLib for OrdersLib.Order;
+  using SafeERC20 for IERC20;
+  using SoladySafeCastLib for uint256;
+
+  address internal orderModule;
+  address internal matchingModule;
+  // address internal Module;
+
+  constructor(address _orderModule, address _matchingModule) {
+    orderModule = _orderModule;
+    matchingModule = _matchingModule;
+  }
+
+  // Used for mainnet deployment to register on the turnstile
+  // constructor(address _turnstile, address owner) {
+  //     (bool ok, ) = _turnstile.call(abi.encodeWithSignature("register(address)", owner));
+  //     require(ok, "Failed to register");
+  // }
+
+  // function makeOrder(InputOrder calldata input) external returns (uint256) {
+  //   bytes memory data = _executeModule(orderModule, abi.encodeCall(OrderModule.makeOrder, (input)));
+  // }
+
+  // function marketBuy(InputOrder calldata input) external returns (uint256) {
+  //   bytes memory data = _executeModule(orderModule, abi.encodeCall(OrderModule.marketBuy, (input)));
+  // }
+
+  function cancelOrder(uint256 orderId) external {
+    bytes memory data =
+      _executeModule(orderModule, abi.encodeCall(OrderModule.cancelOrder, (orderId)));
+    address payToken = abi.decode(data, (address));
+    _sendFunds(msg.sender, payToken);
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                  Transfer Functions                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @notice Allow user to withdraw their balance of tokens from contract
+  /// @param token The address of the token to receive
+  function withdraw(address token) external {
+    _sendFunds(msg.sender, token);
+  }
+
+  /// @notice Allow user to withdraw several tokens at once
+  /// @param tokens An array containing the address of tokens to receive
+  function withdraw(address[] calldata tokens) external {
+    uint256 len = tokens.length;
+    for (uint256 i; i < len; ++i) {
+      _sendFunds(msg.sender, tokens[i]);
+    }
+  }
+
+  /// @notice Transfer funds from --> to and calculate received amount
+  /// @param pay_token The address of the token to receive
+  /// @param pay_amount The amount of tokens to receive
+  /// @param from The address to receive funds from
+  /// @return Uint256 The amount of tokens received by this contract
+  function _receiveFunds(address pay_token, uint256 pay_amount, address from)
+    private
+    returns (uint256)
+  {
+    address thisContract = address(this);
+    uint256 balanceBefore = IERC20(pay_token).balanceOf(thisContract);
+    IERC20(pay_token).safeTransferFrom(from, thisContract, pay_amount);
+    return IERC20(pay_token).balanceOf(thisContract) - balanceBefore;
+  }
+
+  /// @notice Send funds in userBalances to users
+  /// @param token The address of the token to receive
+  /// @param to The address to receive the tokens
+  function _sendFunds(address to, address token) private {
+    uint256 amount = userBalances[to][token];
+    if (amount != 0) {
+      delete userBalances[to][token];
+      IERC20(token).safeTransfer(to, amount);
+    }
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                  Helper Functions                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+  function _transformOrder(InputOrder calldata input) private returns (OrdersLib.Order memory) {
+    uint256 received = _receiveFunds(input.pay_tkn, input.pay_amt, msg.sender);
+    uint256 orderPrice = OrdersLib.buyToPrice(input.buy_amt, received);
+    if (orderPrice < OrdersLib.MAX_PRECISION_LOSS) revert PrecisionLoss();
+
+    return OrdersLib.Order({
+      price: orderPrice,
+      pay_amount: received.toUint96(),
+      pay_token: input.pay_tkn,
+      buy_token: input.buy_tkn,
+      owner: msg.sender,
+      data: ""
+    });
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                  View Functions                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+  function _validateOrder(InputOrder calldata input) internal pure returns (bool) {
+    if (
+      input.pay_amt == 0 || input.buy_amt == 0 || input.pay_tkn == address(0)
+        || input.buy_tkn == address(0) || input.pay_tkn == input.buy_tkn
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  /// @notice Get the top number of items in a market
+  /// @param pay_token The collateral token for the market
+  /// @param buy_token The token that is wanted for the provided collateral
+  /// @param numItems The number of items to return IF less than market size
+  /// @return OrderLib.Order[] The array of the top market orders
+  function getItems(address pay_token, address buy_token, uint256 numItems)
+    external
+    view
+    returns (OrdersLib.Order[] memory)
+  {
+    bytes32 market = getMarket(pay_token, buy_token);
+
+    StructuredLinkedList.List storage list = marketLists[market];
+
+    uint256 size = list.size;
+    if (numItems < size) {
+      size = numItems;
+    }
+
+    OrdersLib.Order[] memory returnOrders = new OrdersLib.Order[](size);
+
+    uint256 orderId;
+    for (uint256 i; i < size; ++i) {
+      (, orderId) = list.getAdjacent(orderId, true);
+      returnOrders[i] = orders[orderId];
+    }
+    return returnOrders;
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                  Module Functions                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+  function _executeModule(address module, bytes memory _data)
+    private
+    returns (bytes memory returnData)
+  {
+    bool success = true;
+    (success, returnData) = module.delegatecall(_data);
+    if (!success) {
+      revert("Error Delegate Call");
+    }
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                  Interface Functions                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+  /// @notice Required by StructuredLinkedList for getSortedSpot
+  /// @dev Determines how the orders should be sorted in the linked lists
+  /// @dev We sort orders by the price value in increasing order
+  /// @param id The id of the order to get the value of
+  /// @return Uint256 The value of the order used for sorting orders
+  function getValue(uint256 id) external view returns (uint256) {
+    return orders[id].price;
+  }
+}
+
+
+
+
+
+
+
+
+SharedStorage.sol
+//SPDX-LICENSE-IDENTIFIER: MIT
+pragma solidity 0.8.24;
+
+import { StructuredLinkedList } from "src/Libraries/StructuredLinkedList.sol";
+import { OrdersLib } from "src/Libraries/OrdersLib.sol";
+
+contract SharedStorage {
+  struct InputOrder {
+    address pay_tkn;
+    uint96 pay_amt;
+    address buy_tkn;
+    uint96 buy_amt;
+  }
+
+  // Counter for unique orders
+  // OrderId of 0 is a critical value, do not set zero to non-zero value
+  uint256 nextOrderId = 1;
+  // User address => Token address => balance
+  mapping(address => mapping(address => uint256)) public userBalances;
+  // OrderId to the order struct
+  mapping(uint256 => OrdersLib.Order) public orders;
+  // Order Id to linked list
+  mapping(bytes32 => StructuredLinkedList.List) internal marketLists;
+
+  event MakeOrder(uint256 id, bytes32 market, uint256 price);
+  event UserBalanceUpdated(address user, address token);
+
+  error InvalidOrder();
+  error PrecisionLoss();
+  error InvalidOwnership();
+  error NotFound();
+  error NoneBought();
+  error BadInsert(uint256 pos);
+  error InvalidBuy();
+
+  /// @notice Get the market identifier for a token pair
+  /// @dev Each market has a unique bytes32 identifier based on the token pair
+  /// @param pay_token, the address of the token the user has and wants to trade
+  /// @param buy_token, the address of the token the user wants in return for pay_token
+  /// @return Bytes32 identifier of the market
+  function getMarket(address pay_token, address buy_token) public pure returns (bytes32) {
+    return keccak256(abi.encode(pay_token, buy_token));
+  }
+
+  /// @notice Get the reversed market identifier for a token pair
+  /// @dev A reversed market is the flipped token pairs
+  /// @dev Example: Market = WCanto/Note , Reversed Market Note/WCanto
+  /// @dev Used to keep code consistent of pay_token then buy_token in function calls
+  /// @param pay_token, the address of the token the user has and wants to trade
+  /// @param buy_token, the address of the token the user wants in return for pay_token
+  /// @return Bytes32 identifier of the reverse market pair
+  function _getReversedMarket(address pay_token, address buy_token) internal pure returns (bytes32) {
+    return getMarket(buy_token, pay_token);
+  }
+}
+
+
+MatchingModule.sol
+//SPDX-LICENSE-IDENTIFIER: MIT
+pragma solidity 0.8.24;
+
+import { SharedStorage, OrdersLib, StructuredLinkedList } from "src/SharedStorage.sol";
+import { SoladySafeCastLib } from "src/Libraries/SoladySafeCastLib.sol";
+
+contract MatchingModule is SharedStorage {
+  using StructuredLinkedList for StructuredLinkedList.List;
+  using OrdersLib for OrdersLib.Order;
+  using SoladySafeCastLib for uint256;
+
+  /// @notice Handles the overall market buy process
+  /// @param request The marketBuy request data as an Order struct
+  /// @return remainingAmount The amount of the request left unbought
+  function marketBuy(OrdersLib.Order calldata request) external returns (uint256) {
+    // Buying into the reversed market list
+    bytes32 market = _getReversedMarket(request.pay_token, request.buy_token);
+
+    uint256 remainingAmount = request.pay_amount;
+    uint256 purchasedAmount;
+
+    bool flag = true;
+
+    while (flag) {
+      (flag, remainingAmount, purchasedAmount) =
+        _processBuy(market, remainingAmount, request.price, purchasedAmount, request.pay_token);
+    }
+
+    if (purchasedAmount != 0) {
+      userBalances[msg.sender][request.buy_token] += purchasedAmount;
+    }
+
+    return remainingAmount;
+  }
+
+  /// @notice Handle the market buy process on individual stored orders
+  /// @param market The bytes32 identifier for the market
+  /// @param remainingAmount The amount left in the buy order
+  /// @param requestPrice The maximum price to buy orders
+  /// @param purchasedAmount The total amount of purchased tokens
+  /// @param payToken The pay_token of the ***buy_order***
+  /// @return bool True if we continue buying orders, false if done
+  /// @return uint256 The remaining amount of purchasing power
+  /// @return uint256 The cumulative amount of tokens purchased
+  function _processBuy(
+    bytes32 market,
+    uint256 remainingAmount,
+    uint256 requestPrice,
+    uint256 purchasedAmount,
+    address payToken
+  ) internal returns (bool, uint256, uint256) {
+    (, uint256 orderId) = marketLists[market].getAdjacent(0, true);
+    // If orderId is zero the list is empty
+    if (orderId == 0) return (false, remainingAmount, purchasedAmount);
+
+    OrdersLib.Order storage order = orders[orderId];
+
+    if (order.reversePrice() < requestPrice) {
+      return (false, remainingAmount, purchasedAmount);
+    }
+
+    uint256 payOut;
+    // If the order is greater than the buy request, consume the buy request
+    // otherwise consume the order and continue
+    if (order.priceToBuy() > remainingAmount) {
+      payOut = order.buyQuote(remainingAmount);
+      order.pay_amount = (order.pay_amount - payOut).toUint96();
+
+      purchasedAmount += payOut;
+      userBalances[order.owner][payToken] += remainingAmount;
+      emit UserBalanceUpdated(order.owner, payToken);
+
+      return (false, 0, purchasedAmount);
+    } else {
+      payOut = order.priceToBuy();
+
+      purchasedAmount += order.pay_amount;
+      userBalances[order.owner][payToken] += payOut;
+      emit UserBalanceUpdated(order.owner, payToken);
+
+      _popHead(market, orderId);
+      return (true, remainingAmount - payOut, purchasedAmount);
+    }
+  }
+
+  /// @notice Private function to remove the first item of the list
+  /// @param market The market of the order to remove
+  /// @param orderId The id of the order to remove
+  function _popHead(bytes32 market, uint256 orderId) internal {
+    marketLists[market].popFront();
+    delete orders[orderId];
+  }
+}
+
+
+OrderModule.sol
+//SPDX-LICENSE-IDENTIFIER: MIT
+pragma solidity 0.8.24;
+
+import { SharedStorage, OrdersLib, StructuredLinkedList } from "src/SharedStorage.sol";
+// import {SoladySafeCastLib} from "src/Libraries/SoladySafeCastLib.sol";
+import { SafeERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+contract OrderModule is SharedStorage {
+  using StructuredLinkedList for StructuredLinkedList.List;
+  using SafeERC20 for IERC20;
+
+  /// @notice Stores an order in the appropriate market list
+  /// @param order The order to record
+  /// @return Uint256 The id of the recorded order
+  function recordOrder(OrdersLib.Order calldata order) external returns (uint256) {
+    require(order.owner != address(0), "Uh oh");
+
+    uint256 thisOrder = nextOrderId;
+    nextOrderId++;
+
+    orders[thisOrder] = order;
+
+    bytes32 market = getMarket(order.pay_token, order.buy_token);
+    StructuredLinkedList.List storage list = marketLists[market];
+
+    uint256 spot = list.getSortedSpot(msg.sender, order.price);
+
+    if (!list.insertBefore(spot, thisOrder)) revert BadInsert(spot);
+
+    emit MakeOrder(thisOrder, market, order.price);
+    return (thisOrder);
+  }
+
+  /// @notice Cancel an existing order
+  /// @param orderId The id of the order to cancel
+  function cancelOrder(uint256 orderId) external returns (address) {
+    OrdersLib.Order storage order = orders[orderId];
+    if (msg.sender != order.owner) revert InvalidOwnership();
+
+    address payToken = order.pay_token;
+
+    bytes32 market = getMarket(payToken, order.buy_token);
+
+    userBalances[msg.sender][payToken] += order.pay_amount;
+
+    // There is no orderId 0, so should revert on !nodeExists check in remove
+    if (marketLists[market].remove(orderId) != orderId) revert NotFound();
+    delete orders[orderId];
+
+    return payToken;
+  }
+
+  /// @notice Send funds in userBalances to users
+  /// @param token The address of the token to receive
+  /// @param to The address to receive the tokens
+  function _sendFunds(address to, address token) private {
+    uint256 amount = userBalances[to][token];
+    if (amount != 0) {
+      delete userBalances[to][token];
+      IERC20(token).safeTransfer(to, amount);
+    }
+  }
+}
+
+
+
+Factory.sol
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
+
+import { Singleton } from "src/Singleton.sol";
+import { OrderModule } from "src/Modules/OrderModule.sol";
+import { MatchingModule } from "src/Modules/MatchingModule.sol";
+
+contract Factory {
+  Singleton internal singleton;
+
+  OrderModule internal _orderModule;
+  MatchingModule internal _matchingModule;
+
+  constructor() {
+    _orderModule = new OrderModule();
+    _matchingModule = new MatchingModule();
+
+    singleton = new Singleton(address(_orderModule), address(_matchingModule));
+  }
+
+  function getContracts() external view returns (Singleton, OrderModule, MatchingModule) {
+    return (singleton, _orderModule, _matchingModule);
+  }
+}
