@@ -83,7 +83,7 @@ Retrieves an array of orders which an address has active in the market.
 Parameters <br />
 user{address}: The address of the user to retrieve data <br />
 Returns <br />
-An array of Order structs the user has in the market.
+An array of Order structs the user has in the market, and a uint256 array of the user's orderIds. 
 
 ### getMarketOrders
 Retrieves the top number of items in a market, providing details about the lowest-cost orders.

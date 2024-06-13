@@ -181,15 +181,17 @@ contract PublicMarket is MatchingEngine {
   /// @notice Get a user's current orders
   /// @param user The address of the user
   /// @return OrdersLib.Order[] An unsorted array of user's orders
-  function getUserOrders(address user) external view returns (OrdersLib.Order[] memory) {
+  function getUserOrders(address user) external view returns (OrdersLib.Order[] memory, uint256[] memory) {
     StructuredLinkedList.List storage list = userOrders[user];
     uint256 size = list.size;
 
     OrdersLib.Order[] memory userOrder = new OrdersLib.Order[](size);
+    uint256[] memory userOrderIds = new uint256[](size);
 
     uint256 orderId;
     for (uint256 i; i < size; ++i) {
       (, orderId) = list.getAdjacent(orderId, true);
+      userOrderIds[i] = orderId;
       userOrder[i] = orders[orderId];
     }
 
