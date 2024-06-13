@@ -5,15 +5,16 @@ import { BaseTargetFunctions } from "lib/chimera/src/BaseTargetFunctions.sol";
 import { BeforeAfter } from "./BeforeAfter.sol";
 import { Properties } from "./Properties.sol";
 import { vm } from "lib/chimera/src/Hevm.sol";
+import {MockERC20} from "src/Mocks/MockERC20.sol";
 
 abstract contract TargetFunctions is BaseTargetFunctions, Properties, BeforeAfter { 
 
   function publicMarket_makeOrderSimple(address pay_tkn, uint256 pay_amt, address buy_tkn, uint256 buy_amt) public {
-    publicMarket.makeOrderSimple(pay_tkn, pay_amt, buy_tkn, buy_amt);
+    target.makeOrderSimple(pay_tkn, pay_amt, buy_tkn, buy_amt);
   }
 
 
-  function pickTokenPair(uint256 rand) internal returns(MockErc20, MockErc20) {
+  function pickTokenPair(uint256 rand) internal returns(MockERC20, MockERC20) {
     rand = uint256(keccak256(abi.encode(rand - 1)));
     uint256 modulo = 6;
     if (rand % modulo == 0) {

@@ -12,7 +12,7 @@ contract Actor {
     MockERC20 internal tokenTwo;
     MockERC20 internal tokenThree;
 
-    constructor(address target, address _tokenOne, address _tokenTwo, address _tokenThree) {
+    constructor(address _target, address _tokenOne, address _tokenTwo, address _tokenThree) {
         tokenOne = MockERC20(_tokenOne);
         tokenTwo = MockERC20(_tokenTwo);
         tokenThree = MockERC20(_tokenThree);

@@ -35,18 +35,6 @@ buy_amt{uint256}: Amount of buying token desired. <br />
 Returns <br />
 uint256: Order ID. 
 
-### makeOrderOnBehalf
-(development)
-Creates a simple trading order for another address. Same as makeOrderSimple when recipient is msg.sender. Not for general use, but specific use cases when you need to create an order for another user. Funds come from caller, not recipient. 
-
-Parameters <br />
-pay_tkn{address}: Address of the payment token.  <br />
-pay_amt{uint256}: Amount of payment token to trade. Must have approval to transfer tokens from user. <br />
-buy_tkn{address}: Address of the buying token. <br />
-buy_amt{uint256}: Amount of buying token desired. <br />
-recipient: The order's owner <br />
-Returns <br /> 
-uint256: Order ID.  
 
 ### marketBuy
 Executes a market buy operation, attempting to purchase a specified amount of a token (buy_tkn) using another token (pay_tkn). The function calculates the best possible price based on the current market conditions.
