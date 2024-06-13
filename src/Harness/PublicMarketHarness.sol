@@ -27,6 +27,18 @@ contract PublicMarketHarness is PublicMarket {
     return order.reversePrice();
   }
 
+  function GetUserBalances(address user, address[] calldata tokens) external returns(uint256[] memory){
+    uint256 lenTokens = tokens.length;
+    
+    uint256[] memory userBalance = new uint256[](lenTokens);
+
+    for (uint256 i; i < lenTokens; ++i) {
+      userBalance[i] = userBalances(user, tokens[i]);
+    }
+
+    return userBalance;
+  }
+
   function GetListSize(bytes32 market) public view returns (uint256) {
     return marketLists[market].size;
   }
