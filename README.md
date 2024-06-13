@@ -26,9 +26,9 @@ The orderbook should support any ERC-20 token. ERC-721 are not supported. You ca
 
 #### makeOrderSimple
 
-Creates a simple trading order. \
+Creates a simple trading order.  
 
-Parameters: \ 
+Parameters \ 
 pay_tkn{address}: Address of the payment token. \
 pay_amt{uint256}: Amount of payment token to trade. Must have approval to transfer tokens from user.\
 buy_tkn{address}: Address of the buying token. \
