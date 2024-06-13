@@ -22,9 +22,8 @@ The orderbook should support any ERC-20 token. ERC-721 are not supported. You ca
 
 ## PublicMarket Contract
 
-### Functions
 
-#### makeOrderSimple
+### makeOrderSimple
 
 Creates a simple trading order.  
 
@@ -36,7 +35,7 @@ buy_amt{uint256}: Amount of buying token desired. <br />
 Returns <br />
 uint256: Order ID. 
 
-#### makeOrderOnBehalf
+### makeOrderOnBehalf
 
 Creates a simple trading order for another address. Same as makeOrderSimple when recipient is msg.sender. Not for general use, but specific use cases when you need to create an order for another user. Funds come from caller, not recipient. 
 
@@ -49,7 +48,7 @@ recipient: The order's owner <br />
 Returns <br /> 
 uint256: Order ID.  
 
-#### marketBuy
+### marketBuy
 Executes a market buy operation, attempting to purchase a specified amount of a token (buy_tkn) using another token (pay_tkn). The function calculates the best possible price based on the current market conditions.
 
 Parameters <br />
@@ -60,25 +59,25 @@ buy_amt{uint256}: Amount of buying token desired. <br />
 Returns <br />
 uint256: Remaining amount of pay_tkn after the transaction, if any. 
 
-#### cancelOrder
+### cancelOrder
 Cancels an existing order, returning any unfulfilled amounts to the order's creator.
 
 Parameters <br />
 orderId{uint256}: ID of the order to cancel. 
 
-#### withdraw
+### withdraw
 Allows a user to withdraw their balance of a specific token from the contract. Tokens from fufilled orders are generally held by the contract and must be claimed.
 
 Parameters <br />
 token{address}: Address of the token to withdraw. 
 
-#### withdrawMany
+### withdrawMany
 Permits a user to withdraw balances of multiple tokens at once. Tokens from fufilled orders are generally held by the contract and must be claimed.
 
 Parameters <br />
 tokens{address[]}: Array of addresses representing the tokens to withdraw. 
 
-#### getUserOrders
+### getUserOrders
 Retrieves an array of orders which an address has active in the market.
 
 Parameters <br />
@@ -86,7 +85,7 @@ user{address}: The address of the user to retrieve data <br />
 Returns <br />
 An array of Order structs the user has in the market.
 
-#### getMarketOrders
+### getMarketOrders
 Retrieves the top number of items in a market, providing details about the lowest-cost orders.
 
 Parameters <br />
@@ -97,9 +96,9 @@ Returns <br />
 Two {uint256[]}: Pay amounts and buy amounts for the top market orders. 
 
 ## SimpleMarket.sol
-### Functions
 
-#### userBalances
+
+### userBalances
 Get the balance of a user for a specific token. Public mapping variable.
 
 Parameters <br />
@@ -107,14 +106,14 @@ First address: User's address. <br />
 Second address: Token's address <br />
 mapping(address => mapping(address => uint256)) public userBalances;
 
-#### orders
+### orders
 Get an order from an orderId. OrderIds are returned and emitted when creating an order. Public mapping variable. 
 
 Parameters <br />
 uint256: OrderId <br />
 mapping(uint256 => OrdersLib.Order) public orders;
 
-#### getMarket 
+### getMarket 
 Get the bytes32 identifier for a market. 
 
 Parameters <br />
