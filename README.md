@@ -8,7 +8,7 @@ The PublicMarket contract form the main entrypoint for the set of smart contract
 MatchingEngine: Inherits from SimpleMarket and contains the logic for matching user orders. \
 SimpleMarket: Manages the storage and retrieval of orders, user balances, and market identifiers. \
 StructuredLinkedList: A custom data structure for efficiently storing and retrieving orders. \
-OrdersLib: Contains utility functions and definitions related to orders. \
+OrdersLib: Contains utility functions and definitions related to orders. 
 
 ## System Design
 
@@ -34,7 +34,7 @@ pay_amt{uint256}: Amount of payment token to trade. Must have approval to transf
 buy_tkn{address}: Address of the buying token. \
 buy_amt{uint256}: Amount of buying token desired. \
 Returns \
-uint256: Order ID. \
+uint256: Order ID. 
 
 #### makeOrderOnBehalf
 
@@ -47,7 +47,7 @@ buy_tkn{address}: Address of the buying token. \
 buy_amt{uint256}: Amount of buying token desired. \
 recipient: The order's owner \
 Returns \ 
-uint256: Order ID.  \
+uint256: Order ID.  
 
 #### marketBuy
 Executes a market buy operation, attempting to purchase a specified amount of a token (buy_tkn) using another token (pay_tkn). The function calculates the best possible price based on the current market conditions.
@@ -58,25 +58,25 @@ pay_amt{uint256}: Amount of payment token to trade. Must have approval to transf
 buy_tkn{address}: Address of the buying token. \
 buy_amt{uint256}: Amount of buying token desired. \
 Returns \
-uint256: Remaining amount of pay_tkn after the transaction, if any. \
+uint256: Remaining amount of pay_tkn after the transaction, if any. 
 
 #### cancelOrder
 Cancels an existing order, returning any unfulfilled amounts to the order's creator.
 
 Parameters \
-orderId{uint256}: ID of the order to cancel. \
+orderId{uint256}: ID of the order to cancel. 
 
 #### withdraw
 Allows a user to withdraw their balance of a specific token from the contract. Tokens from fufilled orders are generally held by the contract and must be claimed.
 
 Parameters \
-token{address}: Address of the token to withdraw. \
+token{address}: Address of the token to withdraw. 
 
 #### withdrawMany
 Permits a user to withdraw balances of multiple tokens at once. Tokens from fufilled orders are generally held by the contract and must be claimed.
 
 Parameters \
-tokens{address[]}: Array of addresses representing the tokens to withdraw. \
+tokens{address[]}: Array of addresses representing the tokens to withdraw. 
 
 #### getUserOrders
 Retrieves an array of orders which an address has active in the market.
@@ -94,7 +94,7 @@ pay_token{address}: Collateral token for the market. \
 buy_token{address}: Token sought in exchange for the collateral. \
 numItems{uint256}: Number of items to retrieve. \
 Returns \
-Two {uint256[]}: Pay amounts and buy amounts for the top market orders. \
+Two {uint256[]}: Pay amounts and buy amounts for the top market orders. 
 
 ## SimpleMarket.sol
 ### Functions
