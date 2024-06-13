@@ -36,7 +36,7 @@ Returns <br />
 uint256: Order ID. 
 
 ### makeOrderOnBehalf
-
+(development)
 Creates a simple trading order for another address. Same as makeOrderSimple when recipient is msg.sender. Not for general use, but specific use cases when you need to create an order for another user. Funds come from caller, not recipient. 
 
 Parameters <br />
