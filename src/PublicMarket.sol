@@ -1,13 +1,13 @@
 //SPDX-LICENSE-IDENTIFIER: MIT
-pragma solidity 0.8.24;
-
+pragma solidity 0.8.20;
+// 0xecf55337d2a1588a14fe7666cfb47b4de3063408 - Testnet
+import { SoladySafeCastLib } from "src/Libraries/SoladySafeCastLib.sol";
 import {
   MatchingEngine,
+  OrdersLib,
   SoladySafeCastLib,
-  StructuredLinkedList,
-  OrdersLib
+  StructuredLinkedList
 } from "src/MatchingEngine.sol";
-import { SoladySafeCastLib } from "src/Libraries/SoladySafeCastLib.sol";
 
 contract PublicMarket is MatchingEngine {
   using StructuredLinkedList for StructuredLinkedList.List;
@@ -22,15 +22,18 @@ contract PublicMarket is MatchingEngine {
 
   /// @notice Public entrypoint to making an order
   /// @dev See _makeOrder
-  function makeOrderSimple(address pay_tkn, uint256 pay_amt, address buy_tkn, uint256 buy_amt)
-    external
-    returns (uint256)
-  {
+  function makeOrderSimple(
+    address pay_tkn,
+    uint256 pay_amt,
+    address buy_tkn,
+    uint256 buy_amt
+  ) external returns (uint256) {
     return _makeOrder(pay_tkn, pay_amt, buy_tkn, buy_amt, msg.sender, "");
   }
   /// @notice Public entrypoint to making an order for another
   /// @dev Not recommended for general use
   /// @dev Caller pays, and recipient receives the funds
+
   function makeOrderOnBehalf(
     address pay_tkn,
     uint256 pay_amt,
@@ -43,10 +46,12 @@ contract PublicMarket is MatchingEngine {
 
   /// @notice Public entrypoint to making a market buy
   /// @dev See _marketBuy
-  function marketBuy(address pay_tkn, uint256 pay_amt, address buy_tkn, uint256 buy_amt)
-    external
-    returns (uint256)
-  {
+  function marketBuy(
+    address pay_tkn,
+    uint256 pay_amt,
+    address buy_tkn,
+    uint256 buy_amt
+  ) external returns (uint256) {
     return _marketBuy(pay_tkn, pay_amt, buy_tkn, buy_amt);
   }
 
@@ -57,10 +62,12 @@ contract PublicMarket is MatchingEngine {
   /// @param buy_tkn, the address of the token the user wants in return for pay_token
   /// @param buy_amt, the amount of buy_tkn the user wants in return for pay_amt
   /// @return Uint256, The amount remaining from the marketBuy
-  function _marketBuy(address pay_tkn, uint256 pay_amt, address buy_tkn, uint256 buy_amt)
-    internal
-    returns (uint256)
-  {
+  function _marketBuy(
+    address pay_tkn,
+    uint256 pay_amt,
+    address buy_tkn,
+    uint256 buy_amt
+  ) internal returns (uint256) {
     if (pay_amt == 0) revert InvalidOrder();
     if (buy_amt == 0) revert InvalidOrder();
     if (pay_tkn == address(0)) revert InvalidOrder();
@@ -181,7 +188,11 @@ contract PublicMarket is MatchingEngine {
   /// @notice Get a user's current orders
   /// @param user The address of the user
   /// @return OrdersLib.Order[] An unsorted array of user's orders
-  function getUserOrders(address user) external view returns (OrdersLib.Order[] memory, uint256[] memory) {
+  function getUserOrders(address user)
+    external
+    view
+    returns (OrdersLib.Order[] memory, uint256[] memory)
+  {
     StructuredLinkedList.List storage list = userOrders[user];
     uint256 size = list.size;
 
@@ -195,7 +206,7 @@ contract PublicMarket is MatchingEngine {
       userOrder[i] = orders[orderId];
     }
 
-    return userOrder;
+    return (userOrder, userOrderIds);
   }
 
   /// @notice Get the top number of items in a market
@@ -204,11 +215,11 @@ contract PublicMarket is MatchingEngine {
   /// @param numItems The number of items to return IF less than market size
   /// @return uint256[] The array of pay_amounts for the top market orders
   /// @return uint256[] The array of buy_amounts for the top market orders
-  function getMarketOrders(address pay_token, address buy_token, uint256 numItems)
-    external
-    view
-    returns (uint256[] memory, uint256[] memory)
-  {
+  function getMarketOrders(
+    address pay_token,
+    address buy_token,
+    uint256 numItems
+  ) external view returns (uint256[] memory, uint256[] memory) {
     bytes32 market = getMarket(pay_token, buy_token);
 
     StructuredLinkedList.List storage list = marketLists[market];

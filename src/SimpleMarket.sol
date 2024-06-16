@@ -1,10 +1,10 @@
 //SPDX-LICENSE-IDENTIFIER: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.20;
 
-import { StructuredLinkedList, IStructureInterface } from "src/Libraries/StructuredLinkedList.sol";
-import { OrdersLib } from "src/Libraries/OrdersLib.sol";
-import { SafeERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import { OrdersLib } from "src/Libraries/OrdersLib.sol";
+import { IStructureInterface, StructuredLinkedList } from "src/Libraries/StructuredLinkedList.sol";
 
 contract SimpleMarket is IStructureInterface {
   using StructuredLinkedList for StructuredLinkedList.List;
@@ -13,7 +13,7 @@ contract SimpleMarket is IStructureInterface {
 
   // Counter for unique orders
   // OrderId of 0 is a critical value, do not set zero to non-zero value
-  uint256 nextOrderId = 1;
+  uint256 internal nextOrderId = 1;
   // User address => Token address => balance
   mapping(address => mapping(address => uint256)) public userBalances;
   // User address => User's Orders
@@ -35,8 +35,8 @@ contract SimpleMarket is IStructureInterface {
 
   /// @notice Get the market identifier for a token pair
   /// @dev Each market has a unique bytes32 identifier based on the token pair
-  /// @param pay_token, the address of the token the user has and wants to trade
-  /// @param buy_token, the address of the token the user wants in return for pay_token
+  /// @param pay_token the address of the token the user has and wants to trade
+  /// @param buy_token the address of the token the user wants in return for pay_token
   /// @return Bytes32 identifier of the market
   function getMarket(address pay_token, address buy_token) public pure returns (bytes32) {
     return keccak256(abi.encode(pay_token, buy_token));
@@ -46,8 +46,8 @@ contract SimpleMarket is IStructureInterface {
   /// @dev A reversed market is the flipped token pairs
   /// @dev Example: Market = WCanto/Note , Reversed Market Note/WCanto
   /// @dev Used to keep code consistent of pay_token then buy_token in function calls
-  /// @param pay_token, the address of the token the user has and wants to trade
-  /// @param buy_token, the address of the token the user wants in return for pay_token
+  /// @param pay_token the address of the token the user has and wants to trade
+  /// @param buy_token the address of the token the user wants in return for pay_token
   /// @return Bytes32 identifier of the reverse market pair
   function _getReversedMarket(address pay_token, address buy_token) internal pure returns (bytes32) {
     return getMarket(buy_token, pay_token);
@@ -81,10 +81,11 @@ contract SimpleMarket is IStructureInterface {
   /// @param pay_amount The amount of tokens to receive
   /// @param from The address to receive funds from
   /// @return Uint256 The amount of tokens received by this contract
-  function _receiveFunds(address pay_token, uint256 pay_amount, address from)
-    internal
-    returns (uint256)
-  {
+  function _receiveFunds(
+    address pay_token,
+    uint256 pay_amount,
+    address from
+  ) internal returns (uint256) {
     address thisContract = address(this);
     uint256 balanceBefore = IERC20(pay_token).balanceOf(thisContract);
     IERC20(pay_token).safeTransferFrom(from, thisContract, pay_amount);

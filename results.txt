@@ -1,0 +1,229 @@
+Compiling 2 files with Solc 0.8.24
+Solc 0.8.24 finished in 1.48s
+Compiler run successful with warnings:
+Warning (5574): Contract code size is 26022 bytes and exceeds 24576 bytes (a limit introduced in Spurious Dragon). This contract may not be deployable on Mainnet. Consider enabling the optimizer (with a low "runs" value!), turning off revert strings, or using libraries.
+  --> test/PoeAudits/CryticToFoundry.sol:10:1:
+   |
+10 | contract CryticToFoundry is TargetFunctions, FoundryAsserts {
+   | ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Ran 1 test for test/PoeAudits/CryticToFoundry.sol:CryticToFoundry
+[PASS] test_fuzz_market_buy() (gas: 2443241)
+Logs:
+  Market
+  Order     :                              2
+  {
+  Price     :                              12891847765408573729785453
+  Pay Amount:                              613808803335975
+  Buy Amount:                              7913129649674
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  Order     :                              3
+  {
+  Price     :                              29992218928972422128829624
+  Pay Amount:                              263839420098322
+  Buy Amount:                              7913129649681
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  Order     :                              7
+  {
+  Price     :                              300520767448753431639284702
+  Pay Amount:                              879096871036687
+  Buy Amount:                              264186866345742
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  Order     :                              6
+  {
+  Price     :                              955669486619876760394509395
+  Pay Amount:                              526809519400722
+  Buy Amount:                              503455782952151
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  Order     :                              8
+  {
+  Price     :                              1077527091434726714567005310
+  Pay Amount:                              803100646319887
+  Buy Amount:                              865362703558416
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  Order     :                              4
+  {
+  Price     :                              1130547632621105138981716032
+  Pay Amount:                              579164990499036
+  Buy Amount:                              654773608905709
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  Order     :                              1
+  {
+  Price     :                              2036647277493569737276795291
+  Pay Amount:                              431960895684942
+  Buy Amount:                              879751982180420
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  Order     :                              5
+  {
+  Price     :                              2066521572152392553848137180
+  Pay Amount:                              360060944723952
+  Buy Amount:                              744073709561616
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  
+  
+  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  Path 2
+  Path 2
+  Path 2
+  Market After 
+  Order     :                              6
+  {
+  Price     :                              955669486619876760394509395
+  Pay Amount:                              526809519400722
+  Buy Amount:                              503455782952151
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  Order     :                              8
+  {
+  Price     :                              1077527091434726714567005310
+  Pay Amount:                              803100646319887
+  Buy Amount:                              865362703558416
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  Order     :                              4
+  {
+  Price     :                              1130547632621105138981716032
+  Pay Amount:                              579164990499036
+  Buy Amount:                              654773608905709
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  Order     :                              1
+  {
+  Price     :                              2036647277493569737276795291
+  Pay Amount:                              431960895684942
+  Buy Amount:                              879751982180420
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  Order     :                              5
+  {
+  Price     :                              2066521572152392553848137180
+  Pay Amount:                              360060944723952
+  Buy Amount:                              744073709561616
+  Pay Token :                              0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+  Buy Token :                              0x2e234DAe75C793f67A35089C9d99245E1C58470b
+  Owner     :                              0x0000000000000000000000000000000000010000
+  Market    : 
+  0x03b2d03e3a04ff90f2b74ee69cf8b93826f73eac1d611a98df6386e7944c647b
+  }
+  
+  
+  
+  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  Bob Pays                                 481103610259214
+  Bob Want                                 567294571000818
+  Bob Price                                1179152596038855619832875665
+  Bob Reverse Price                        848066656817204551521652984
+  
+  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  Bob Remaining                            201090484614117
+  Bob Spent                                280013125645097
+  
+  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  Market Remaing                           2701096996628539
+  Market Wants                             3647417787158312
+  Market Min Price                         955669486619876760394509395
+  
+  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  Bob _weth                                1756745094470984
+  Bob _wbtc                                -280013125645097
+  
+  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  Alice _weth                              0
+  Alice _wbtc                              0
+  
+  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  Alice Contract _weth                     0
+  Bob Contract _weth                       0
+  
+  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  Alice Contract _wbtc                     280013125645097
+  Bob Contract _wbtc                       0
+  
+  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  Alice Pay Amounts                        4457842091099523
+  Alice Buy Amounts                        3927430912803417
+  
+  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 12.10ms (4.49ms CPU time)
+
+Ran 1 test suite in 21.74ms (12.10ms CPU time): 1 tests passed, 0 failed, 0 skipped (1 total tests)

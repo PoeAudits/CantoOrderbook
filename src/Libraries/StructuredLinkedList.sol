@@ -156,11 +156,11 @@ library StructuredLinkedList {
    * @param _direction Direction to step in.
    * @return bool, uint256 True if node exists or false otherwise, node in _direction.
    */
-  function getAdjacent(List storage self, uint256 _node, bool _direction)
-    internal
-    view
-    returns (bool, uint256)
-  {
+  function getAdjacent(
+    List storage self,
+    uint256 _node,
+    bool _direction
+  ) internal view returns (bool, uint256) {
     if (!nodeExists(self, _node)) {
       return (false, 0);
     } else {
@@ -197,11 +197,11 @@ library StructuredLinkedList {
    * @param _value Value to seek.
    * @return uint256 Next node with a value greater than _value.
    */
-  function getSortedSpot(List storage self, address _structure, uint256 _value)
-    internal
-    view
-    returns (uint256)
-  {
+  function getSortedSpot(
+    List storage self,
+    address _structure,
+    uint256 _value
+  ) internal view returns (uint256) {
     if (sizeOf(self) == 0) {
       return 0;
     }
@@ -245,10 +245,12 @@ library StructuredLinkedList {
    * @param _direction Direction to insert node in.
    * @return bool True if success, false otherwise.
    */
-  function _insert(List storage self, uint256 _node, uint256 _new, bool _direction)
-    private
-    returns (bool)
-  {
+  function _insert(
+    List storage self,
+    uint256 _node,
+    uint256 _new,
+    bool _direction
+  ) private returns (bool) {
     if (!nodeExists(self, _new) && nodeExists(self, _node)) {
       uint256 c = self.list[_node][_direction];
       _createLink(self, _node, _new, _direction);

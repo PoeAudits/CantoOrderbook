@@ -1,9 +1,9 @@
 //SPDX-LICENSE-IDENTIFIER: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.20;
 
-import { SimpleMarket, StructuredLinkedList } from "src/SimpleMarket.sol";
 import { OrdersLib } from "src/Libraries/OrdersLib.sol";
 import { SoladySafeCastLib } from "src/Libraries/SoladySafeCastLib.sol";
+import { SimpleMarket, StructuredLinkedList } from "src/SimpleMarket.sol";
 
 contract MatchingEngine is SimpleMarket {
   using StructuredLinkedList for StructuredLinkedList.List;
