@@ -15,7 +15,7 @@ contract CryticToFoundry is TargetFunctions, FoundryAsserts {
     targetContract(address(target));
   }
 
-  function test_init() public {
+  function test_init() public view {
     console.log("Implementation: ", _imp);
     console.log("Proxy: ", _proxy);
     console.log("Target: ", _target);
@@ -50,6 +50,64 @@ contract CryticToFoundry is TargetFunctions, FoundryAsserts {
     eq(2e18, _after.makerBalances[1] - _before.makerBalances[1], "Alice Withdrew Extra");
   }
 
+  function test_owner_flush_market() public {
+    maker = _alice;
+    taker = _bob;
+
+    uint256[] memory orderIds = new uint256[](3);
+
+    vm.prank(_alice);
+    orderIds[0] = target.makeOrderSimple(_tokens[0], 1e18, _tokens[1], 1e18);
+    vm.prank(_alice);
+    orderIds[1] = target.makeOrderSimple(_tokens[0], 1.5e18, _tokens[1], 1.2e18);
+    vm.prank(_bob);
+    target.makeOrderSimple(_tokens[0], 1e18, _tokens[1], 1.1e18);
+    vm.prank(_bob);
+    orderIds[2] = target.makeOrderSimple(_tokens[0], 1e18, _tokens[1], 1.5e18);
+
+    bytes32 market = target.getMarket(_tokens[0], _tokens[1]);
+    __before();
+    vm.prank(_admin);
+    target.ownerFlushMarket(market, orderIds);
+    __after();
+
+
+    eq(_after.targetBalances[0][0] - _before.targetBalances[0][0], 2.5e18, "Alice Flush Balance Fail");
+    eq(_after.targetBalances[0][1] - _before.targetBalances[0][1], 1e18, "Bob Flush Balance Fail");
+    eq(_before.makerOrderSize - _after.makerOrderSize, 2, "Alice Order Size Fail");
+    eq(_before.takerOrderSize - _after.takerOrderSize, 1, "Bob Order Size Fail");
+
+  }
+  function test_owner_flush_market_reverts() public {
+    maker = _alice;
+    taker = _bob;
+
+    uint256[] memory orderIds = new uint256[](3);
+
+    vm.prank(_alice);
+    orderIds[0] = target.makeOrderSimple(_tokens[0], 1e18, _tokens[1], 1e18);
+    vm.prank(_alice);
+    orderIds[1] = target.makeOrderSimple(_tokens[0], 1.5e18, _tokens[1], 1.2e18);
+    vm.prank(_bob);
+    target.makeOrderSimple(_tokens[0], 1e18, _tokens[1], 1.1e18);
+    vm.prank(_bob);
+    target.makeOrderSimple(_tokens[0], 1e18, _tokens[1], 1.5e18);
+    vm.prank(_bob);
+    uint256 wrongMarket = target.makeOrderSimple(_tokens[1], 1e18, _tokens[0], 1.5e18);
+
+    bytes32 market = target.getMarket(_tokens[0], _tokens[1]);
+
+    orderIds[2] = orderIds[1]; // Duplicates
+    vm.expectRevert(bytes4(0xc5723b51)); // NotFound()
+    vm.prank(_admin);
+    target.ownerFlushMarket(market, orderIds);
+
+    orderIds[2] = wrongMarket; // Order in different market
+
+    vm.expectRevert(bytes4(0xc5723b51)); // NotFound()
+    vm.prank(_admin);
+    target.ownerFlushMarket(market, orderIds);
+  }
 
   function test_fuzz_market_buy_1() public {
     showLogs = true;

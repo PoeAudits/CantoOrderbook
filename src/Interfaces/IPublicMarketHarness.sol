@@ -64,4 +64,5 @@ interface IPublicMarketHarness {
     function userBalances(address, address) external view returns (uint256);
     function withdraw(address token) external;
     function withdrawMany(address[] memory tokens) external;
+    function ownerFlushMarket(bytes32 market, uint256[] calldata orderIds) external;
 }

@@ -185,6 +185,7 @@ contract PublicMarket is MatchingEngine, Initializable, ReentrancyGuardUpgradeab
     delete orders[orderId];
 
     _sendFunds(msg.sender, payToken);
+    emit OrderCanceled(orderId, market);
   }
 
   /// @notice Allow user to withdraw their balance of tokens from contract
@@ -267,5 +268,26 @@ contract PublicMarket is MatchingEngine, Initializable, ReentrancyGuardUpgradeab
     return (pay_amounts, buy_amounts);
   }
 
+  /// @notice Emergency function for owners to remove orders from market
+  /// @dev Users are attributed their tokens if removed in this manner, must be claimed
+  /// @param market The bytes32 market to remove orders from
+  /// @param orderIds The order ids to remove
+  function ownerFlushMarket(bytes32 market, uint256[] calldata orderIds) external onlyOwner {
+
+    StructuredLinkedList.List storage list = marketLists[market];
+
+    uint256 len = orderIds.length;
+    uint256 orderId;
+    for (uint256 i; i < len; ++i) {
+      OrdersLib.Order memory order = orders[orderIds[i]];
+      userBalances[order.owner][order.pay_token] += order.pay_amount;
+      userOrders[order.owner].remove(orderIds[i]);
+      if (list.remove(orderIds[i]) == 0) revert NotFound();
+    }
+
+    emit OwnerFlushMarket(market, orderIds);
+  }
+
+  /// @notice UUPS upgrade function, restricted to Owner
   function _authorizeUpgrade(address) internal onlyOwner override {}
 }

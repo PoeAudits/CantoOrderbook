@@ -25,7 +25,12 @@ contract SimpleMarket is IStructureInterface {
   mapping(bytes32 => StructuredLinkedList.List) internal marketLists;
 
   event MakeOrder(uint256 id, bytes32 market, uint256 price);
+  event OrderCanceled(uint256 id, bytes32 market);
   event UserBalanceUpdated(address user, address token);
+  event OwnerFlushMarket(bytes32 market, uint256[] orderIds);
+
+  event DEBUG(string s, uint256 v);
+  event DEBUG(string s, address a);
 
   error InvalidOrder();
   error PrecisionLoss();
