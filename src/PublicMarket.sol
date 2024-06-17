@@ -10,16 +10,32 @@ import {
   StructuredLinkedList
 } from "src/MatchingEngine.sol";
 
-contract PublicMarket is MatchingEngine {
+import {OwnableUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
+import {Initializable} from "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+
+contract PublicMarket is MatchingEngine, Initializable, ReentrancyGuardUpgradeable, UUPSUpgradeable, OwnableUpgradeable {
   using StructuredLinkedList for StructuredLinkedList.List;
   using OrdersLib for OrdersLib.Order;
   using SoladySafeCastLib for uint256;
 
-  // Used for mainnet deployment to register on the turnstile
-  // constructor(address _turnstile, address owner) {
-  //     (bool ok, ) = _turnstile.call(abi.encodeWithSignature("register(address)", owner));
-  //     require(ok, "Failed to register");
-  // }
+  constructor() {
+    _disableInitializers();
+  }
+
+  function __PublicMarket_init(address _initialOwner, address _csrRecipient, address _turnstile) external initializer {
+    __Ownable_init(_initialOwner);
+    __ReentrancyGuard_init();
+    __UUPSUpgradeable_init();
+    __PublicMarket_init_unchained(_csrRecipient, _turnstile);
+  }
+
+  function __PublicMarket_init_unchained(address _csrRecipient, address _turnstile) internal onlyInitializing {
+    // (bool ok, ) = _turnstile.call(abi.encodeWithSignature("register(address)", owner));
+    // require(ok, "Failed to register");
+    nextOrderId = 1;
+  }
 
   /// @notice Public entrypoint to making an order
   /// @dev See _makeOrder
@@ -28,7 +44,7 @@ contract PublicMarket is MatchingEngine {
     uint256 pay_amt,
     address buy_tkn,
     uint256 buy_amt
-  ) external returns (uint256) {
+  ) external nonReentrant returns (uint256) {
     return _makeOrder(pay_tkn, pay_amt, buy_tkn, buy_amt, msg.sender, "");
   }
   /// @notice Public entrypoint to making an order for another
@@ -41,7 +57,7 @@ contract PublicMarket is MatchingEngine {
     address buy_tkn,
     uint256 buy_amt,
     address recipient
-  ) external returns (uint256) {
+  ) external nonReentrant returns (uint256) {
     return _makeOrder(pay_tkn, pay_amt, buy_tkn, buy_amt, recipient, "");
   }
 
@@ -52,7 +68,7 @@ contract PublicMarket is MatchingEngine {
     uint256 pay_amt,
     address buy_tkn,
     uint256 buy_amt
-  ) external returns (uint256) {
+  ) external nonReentrant returns (uint256) {
     return _marketBuy(pay_tkn, pay_amt, buy_tkn, buy_amt);
   }
 
@@ -153,7 +169,7 @@ contract PublicMarket is MatchingEngine {
 
   /// @notice Cancel an existing order
   /// @param orderId The id of the order to cancel
-  function cancelOrder(uint256 orderId) external {
+  function cancelOrder(uint256 orderId) external nonReentrant {
     OrdersLib.Order storage order = orders[orderId];
     if (msg.sender != order.owner) revert InvalidOwnership();
 
@@ -173,13 +189,13 @@ contract PublicMarket is MatchingEngine {
 
   /// @notice Allow user to withdraw their balance of tokens from contract
   /// @param token The address of the token to receive
-  function withdraw(address token) external {
+  function withdraw(address token) external nonReentrant {
     _sendFunds(msg.sender, token);
   }
 
   /// @notice Allow user to withdraw several tokens at once
   /// @param tokens An array containing the address of tokens to receive
-  function withdrawMany(address[] calldata tokens) external {
+  function withdrawMany(address[] calldata tokens) external nonReentrant {
     uint256 len = tokens.length;
     for (uint256 i; i < len; ++i) {
       _sendFunds(msg.sender, tokens[i]);
@@ -225,7 +241,7 @@ contract PublicMarket is MatchingEngine {
   /// @param numItems The number of items to return IF less than market size
   /// @return uint256[] The array of pay_amounts for the top market orders
   /// @return uint256[] The array of buy_amounts for the top market orders
-  function _getMarketOrders(
+  function getMarketOrders(
     address pay_token,
     address buy_token,
     uint256 numItems
@@ -250,4 +266,6 @@ contract PublicMarket is MatchingEngine {
     }
     return (pay_amounts, buy_amounts);
   }
+
+  function _authorizeUpgrade(address) internal onlyOwner override {}
 }

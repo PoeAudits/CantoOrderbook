@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { TargetFunctions } from "./TargetFunctions.sol";
-import { Test, console2 as console } from "forge-std/Test.sol";
+import { Test, console2 as console } from "lib/forge-std/src/Test.sol";
 
 import { FoundryAsserts } from "lib/chimera/src/FoundryAsserts.sol";
 import {OrdersLib} from "src/Libraries/OrdersLib.sol";
@@ -13,6 +13,12 @@ contract CryticToFoundry is TargetFunctions, FoundryAsserts {
     setup();
 
     targetContract(address(target));
+  }
+
+  function test_init() public {
+    console.log("Implementation: ", _imp);
+    console.log("Proxy: ", _proxy);
+    console.log("Target: ", _target);
   }
 
   function test_fuzz_cancel_order(uint96 r1, uint96 r2) public {
@@ -61,10 +67,6 @@ contract CryticToFoundry is TargetFunctions, FoundryAsserts {
     );
   }
 
-  function test_fuzz_market_buy_3() public {
-    showLogs = true;
-    fuzz_market_buy(0, 0);
-  }
 
   function test_fuzz_cancel_order_1() public {
   fuzz_market_buy(39123005385198130189701652680834820149563279462715179642345952871345255966154, 97214873794808545137783655570754834902092925560040351160420198952872813846388);

@@ -13,7 +13,8 @@ contract SimpleMarket is IStructureInterface {
 
   // Counter for unique orders
   // OrderId of 0 is a critical value, do not set zero to non-zero value
-  uint256 internal nextOrderId = 1;
+  // Must be set in constructor to != 0
+  uint256 internal nextOrderId;
   // User address => Token address => balance
   mapping(address => mapping(address => uint256)) public userBalances;
   // User address => User's Orders
