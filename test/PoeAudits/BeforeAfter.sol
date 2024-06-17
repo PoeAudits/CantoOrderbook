@@ -39,7 +39,6 @@ abstract contract BeforeAfter is Setup {
     }
     _before.makerOrderSize = target.GetUserOrdersSize(maker);
     _before.takerOrderSize = target.GetUserOrdersSize(taker);
-
   }
 
   function __before(address tokenOne, address tokenTwo) internal {
@@ -63,6 +62,5 @@ abstract contract BeforeAfter is Setup {
     }
     _after.makerOrderSize = target.GetUserOrdersSize(maker);
     _after.takerOrderSize = target.GetUserOrdersSize(taker);
-
   }
 }

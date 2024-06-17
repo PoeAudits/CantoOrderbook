@@ -57,8 +57,12 @@ contract PublicMarketHarness is PublicMarket {
   //   }
   // }
 
-  function GetMarketSize(bytes32 market) public view returns (uint256) {
+  function GetMarketSize(bytes32 market) external view returns (uint256) {
     return marketLists[market].size;
+  }
+
+  function GetMarketOrderExists(bytes32 market, uint256 orderId) external view returns (bool) {
+    return marketLists[market].nodeExists(orderId);
   }
 
   function GetMarketMinPrice(address tokenOne, address tokenTwo) external view returns (uint256) {
@@ -79,7 +83,7 @@ contract PublicMarketHarness is PublicMarket {
   function CleanMarket(
     address tokenOne,
     address tokenTwo
-  ) public returns (uint256 greenRemaining, uint256 greenWant) {
+  ) external returns (uint256 greenRemaining, uint256 greenWant) {
     bytes32 greenMarket = _getMarket(tokenOne, tokenTwo);
     // bytes32 redMarket = _getMarket(tokenTwo, tokenOne);
     (, uint256 greenId) = marketLists[greenMarket].getAdjacent(0, true);
@@ -98,12 +102,12 @@ contract PublicMarketHarness is PublicMarket {
     // }
   }
 
-  function CleanBalance(address user, address token) public returns (uint256 balance) {
+  function CleanBalance(address user, address token) external returns (uint256 balance) {
     balance = userBalances[user][token];
     delete userBalances[user][token];
   }
 
-  function GetMarketList(bytes32 market) public view returns (uint256[] memory) {
+  function GetMarketList(bytes32 market) external view returns (uint256[] memory) {
     StructuredLinkedList.List storage list = marketLists[market];
     uint256 len = list.sizeOf();
     uint256[] memory items = new uint256[](len);

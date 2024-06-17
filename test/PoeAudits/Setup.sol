@@ -3,14 +3,14 @@ pragma solidity ^0.8.0;
 
 import { BaseSetup } from "lib/chimera/src/BaseSetup.sol";
 import { vm } from "lib/chimera/src/Hevm.sol";
-import { PublicMarketHarness } from "src/Harness/PublicMarketHarness.sol";
-import { MockERC20 } from "src/Mocks/MockERC20.sol";
-import {ERC1967Proxy} from "lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {IPublicMarketHarness} from "src/Interfaces/IPublicMarketHarness.sol";
 
+import { ERC1967Proxy } from
+  "lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { PublicMarketHarness } from "src/Harness/PublicMarketHarness.sol";
+import { IPublicMarketHarness } from "src/Interfaces/IPublicMarketHarness.sol";
+import { MockERC20 } from "src/Mocks/MockERC20.sol";
 
 abstract contract Setup is BaseSetup {
-
   PublicMarketHarness public imp;
   address internal _imp;
 
@@ -57,7 +57,9 @@ abstract contract Setup is BaseSetup {
     imp = new PublicMarketHarness();
     _imp = address(imp);
 
-    bytes memory initData = abi.encodeWithSignature("__PublicMarket_init(address,address,address)", _admin, _admin, _turnstile);
+    bytes memory initData = abi.encodeWithSignature(
+      "__PublicMarket_init(address,address,address)", _admin, _admin, _turnstile
+    );
     vm.prank(_admin);
     proxy = new ERC1967Proxy(_imp, initData);
     _proxy = address(proxy);

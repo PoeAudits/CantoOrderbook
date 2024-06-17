@@ -10,12 +10,23 @@ import {
   StructuredLinkedList
 } from "src/MatchingEngine.sol";
 
-import {OwnableUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {UUPSUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
-import {Initializable} from "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import { OwnableUpgradeable } from
+  "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
-contract PublicMarket is MatchingEngine, Initializable, ReentrancyGuardUpgradeable, UUPSUpgradeable, OwnableUpgradeable {
+import { Initializable } from
+  "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from
+  "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from
+  "lib/openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
+
+contract PublicMarket is
+  MatchingEngine,
+  Initializable,
+  ReentrancyGuardUpgradeable,
+  UUPSUpgradeable,
+  OwnableUpgradeable
+{
   using StructuredLinkedList for StructuredLinkedList.List;
   using OrdersLib for OrdersLib.Order;
   using SoladySafeCastLib for uint256;
@@ -24,14 +35,21 @@ contract PublicMarket is MatchingEngine, Initializable, ReentrancyGuardUpgradeab
     _disableInitializers();
   }
 
-  function __PublicMarket_init(address _initialOwner, address _csrRecipient, address _turnstile) external initializer {
+  function __PublicMarket_init(
+    address _initialOwner,
+    address _csrRecipient,
+    address _turnstile
+  ) external initializer {
     __Ownable_init(_initialOwner);
     __ReentrancyGuard_init();
     __UUPSUpgradeable_init();
     __PublicMarket_init_unchained(_csrRecipient, _turnstile);
   }
 
-  function __PublicMarket_init_unchained(address _csrRecipient, address _turnstile) internal onlyInitializing {
+  function __PublicMarket_init_unchained(
+    address _csrRecipient,
+    address _turnstile
+  ) internal onlyInitializing {
     // (bool ok, ) = _turnstile.call(abi.encodeWithSignature("register(address)", owner));
     // require(ok, "Failed to register");
     nextOrderId = 1;
@@ -139,6 +157,7 @@ contract PublicMarket is MatchingEngine, Initializable, ReentrancyGuardUpgradeab
     if (buy_amt == 0) revert InvalidOrder();
     if (pay_tkn == address(0)) revert InvalidOrder();
     if (buy_tkn == address(0)) revert InvalidOrder();
+    if (recipient == address(0)) revert InvalidOrder();
     if (pay_tkn == buy_tkn) revert InvalidOrder();
 
     uint256 received = _receiveFunds(pay_tkn, pay_amt, msg.sender);
@@ -273,7 +292,6 @@ contract PublicMarket is MatchingEngine, Initializable, ReentrancyGuardUpgradeab
   /// @param market The bytes32 market to remove orders from
   /// @param orderIds The order ids to remove
   function ownerFlushMarket(bytes32 market, uint256[] calldata orderIds) external onlyOwner {
-
     StructuredLinkedList.List storage list = marketLists[market];
 
     uint256 len = orderIds.length;
@@ -289,5 +307,5 @@ contract PublicMarket is MatchingEngine, Initializable, ReentrancyGuardUpgradeab
   }
 
   /// @notice UUPS upgrade function, restricted to Owner
-  function _authorizeUpgrade(address) internal onlyOwner override {}
+  function _authorizeUpgrade(address) internal override onlyOwner { }
 }

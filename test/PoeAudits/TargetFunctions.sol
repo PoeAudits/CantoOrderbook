@@ -153,7 +153,7 @@ abstract contract TargetFunctions is BaseTargetFunctions, Logger {
       gt(_after.takerBalances[0] - _before.takerBalances[0], r2, "Bob Min Receive");
     }
   }
-  
+
   function fuzz_cancel_order(uint96 r1, uint96 r2) public {
     precondition(r1 != 0);
     precondition(r1 < 1e25);
@@ -174,10 +174,12 @@ abstract contract TargetFunctions is BaseTargetFunctions, Logger {
     eq(order.pay_amount, 0, "Order Deletion Failed");
     eq(uint256(uint160(order.owner)), 0, "Order Deletion Failed");
     eq(_after.makerOrderSize - _before.makerOrderSize, 0, "User Order Not Deleted");
-    // Need node exists check
+    t(
+      !target.GetMarketOrderExists(target.getMarket(_tokens[0], _tokens[1]), orderId),
+      "Order Should not Exist"
+    );
   }
 }
-
 
 // function testFuzzMarketOrders(uint256) public {
 //     uint256 r1;
