@@ -13,6 +13,8 @@ abstract contract BeforeAfter is Setup {
     uint256[2] takerBalances;
     uint256[2][2] targetBalances; // [Token][User]
     uint256 marketMinPrice;
+    uint256 makerOrderSize;
+    uint256 takerOrderSize;
   }
 
   Vars internal _before;
@@ -35,6 +37,9 @@ abstract contract BeforeAfter is Setup {
         _before.targetBalances[i][j] = target.userBalances(users[j], _tokens[i]);
       }
     }
+    _before.makerOrderSize = target.GetUserOrdersSize(maker);
+    _before.takerOrderSize = target.GetUserOrdersSize(taker);
+
   }
 
   function __before(address tokenOne, address tokenTwo) internal {
@@ -56,5 +61,8 @@ abstract contract BeforeAfter is Setup {
         _after.targetBalances[i][j] = target.userBalances(users[j], _tokens[i]);
       }
     }
+    _after.makerOrderSize = target.GetUserOrdersSize(maker);
+    _after.takerOrderSize = target.GetUserOrdersSize(taker);
+
   }
 }

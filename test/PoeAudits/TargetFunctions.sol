@@ -15,6 +15,8 @@ abstract contract TargetFunctions is BaseTargetFunctions, Logger {
   function fuzz_market_buy(uint256 r1, uint256 r2) public {
     // uint256 r1;
     // uint256 r2;
+    precondition(r1 != 0);
+    precondition(r2 != 0);
 
     Config memory config = Config({ max: 1e15, offset: 1e4, depth: 3 });
 
@@ -111,8 +113,8 @@ abstract contract TargetFunctions is BaseTargetFunctions, Logger {
       console.log("No Liquidity");
       gte(_after.targetBalances[1][0] + config.depth, makerBuyAmounts, "Alice Min Price");
       gte(
-        (_after.takerBalances[0] - _before.takerBalances[0]) + // Bob received weth
-        utilPriceToBuy(bobMinPrice, remaining), // What the remaining is worth at bobMinPrice
+        (_after.takerBalances[0] - _before.takerBalances[0]) // Bob received weth
+          + utilPriceToBuy(bobMinPrice, remaining), // What the remaining is worth at bobMinPrice
         r2, // What bob wanted
         "Bob Min Price"
       );
@@ -150,9 +152,32 @@ abstract contract TargetFunctions is BaseTargetFunctions, Logger {
       eq(_after.targetBalances[1][0], r1, "Alice Receives Bob's Funds");
       gt(_after.takerBalances[0] - _before.takerBalances[0], r2, "Bob Min Receive");
     }
+  }
+  
+  function fuzz_cancel_order(uint96 r1, uint96 r2) public {
+    precondition(r1 != 0);
+    precondition(r1 < 1e25);
+    precondition(r2 < 1e25);
+    precondition(r2 != 0);
+    __before();
+    vm.prank(_alice);
+    uint256 orderId = target.makeOrderSimple(_tokens[0], r1, _tokens[1], r2);
+    vm.prank(_alice);
+    target.cancelOrder(orderId);
+    __after();
 
+    OrdersLib.Order memory order = target.GetOrder(orderId);
+    uint256 userOrderSize = target.GetUserOrdersSize(_alice);
+
+    eq(_before.makerBalances[0], _after.makerBalances[0], "Balance Change");
+    eq(_before.makerBalances[1], _after.makerBalances[1], "Balance Change Wtf");
+    eq(order.pay_amount, 0, "Order Deletion Failed");
+    eq(uint256(uint160(order.owner)), 0, "Order Deletion Failed");
+    eq(_after.makerOrderSize - _before.makerOrderSize, 0, "User Order Not Deleted");
+    // Need node exists check
   }
 }
+
 
 // function testFuzzMarketOrders(uint256) public {
 //     uint256 r1;

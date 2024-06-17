@@ -10,12 +10,10 @@ contract MatchingEngine is SimpleMarket {
   using OrdersLib for OrdersLib.Order;
   using SoladySafeCastLib for uint256;
 
-  error InvalidBuy();
-
   /// @notice Handles the overall market buy process
   /// @param request The marketBuy request data as an Order struct
   /// @return remainingAmount The amount of the request left unbought
-  function _marketBuy(OrdersLib.Order memory request) internal returns (uint256) {
+  function _matchOrder(OrdersLib.Order memory request) internal returns (uint256) {
     // Buying into the reversed market list
     bytes32 market = _getReversedMarket(request.pay_token, request.buy_token);
 
@@ -81,21 +79,17 @@ contract MatchingEngine is SimpleMarket {
       userBalances[order.owner][payToken] += payOut;
       emit UserBalanceUpdated(order.owner, payToken);
 
-      _popUserOrder(orderId);
+      userOrders[orders[orderId].owner].remove(orderId);
       _popHead(market, orderId);
       return (true, remainingAmount - payOut, purchasedAmount);
     }
   }
 
-  /// @notice Private function to remove the first item of the list
+  /// @notice Remove the first item of the a market
   /// @param market The market of the order to remove
   /// @param orderId The id of the order to remove
   function _popHead(bytes32 market, uint256 orderId) internal {
     marketLists[market].popFront();
     delete orders[orderId];
-  }
-
-  function _popUserOrder(uint256 orderId) internal {
-    if (userOrders[orders[orderId].owner].remove(orderId) == 0) revert NotFound();
   }
 }

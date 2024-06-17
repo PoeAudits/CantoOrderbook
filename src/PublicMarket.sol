@@ -1,6 +1,7 @@
 //SPDX-LICENSE-IDENTIFIER: MIT
 pragma solidity 0.8.20;
 // 0xecf55337d2a1588a14fe7666cfb47b4de3063408 - Testnet
+
 import { SoladySafeCastLib } from "src/Libraries/SoladySafeCastLib.sol";
 import {
   MatchingEngine,
@@ -88,7 +89,7 @@ contract PublicMarket is MatchingEngine {
       data: ""
     });
 
-    uint256 remaining = _marketBuy(order);
+    uint256 remaining = _matchOrder(order);
 
     if (remaining == buy_amt) revert NoneBought();
 
@@ -138,7 +139,7 @@ contract PublicMarket is MatchingEngine {
       data: logic
     });
 
-    uint256 remaining = _marketBuy(order);
+    uint256 remaining = _matchOrder(order);
     uint256 orderId;
 
     if (remaining > 0) {
@@ -158,13 +159,13 @@ contract PublicMarket is MatchingEngine {
 
     address payToken = order.pay_token;
 
-    bytes32 market = getMarket(payToken, order.buy_token);
+    bytes32 market = _getMarket(payToken, order.buy_token);
 
     userBalances[msg.sender][payToken] += order.pay_amount;
 
     // There is no orderId 0, so should revert on !nodeExists check in remove
     if (marketLists[market].remove(orderId) != orderId) revert NotFound();
-    _popUserOrder(orderId);
+    userOrders[orders[orderId].owner].remove(orderId);
     delete orders[orderId];
 
     _sendFunds(msg.sender, payToken);
@@ -183,6 +184,15 @@ contract PublicMarket is MatchingEngine {
     for (uint256 i; i < len; ++i) {
       _sendFunds(msg.sender, tokens[i]);
     }
+  }
+
+  /// @notice Get the market identifier for a token pair
+  /// @dev Each market has a unique bytes32 identifier based on the token pair
+  /// @param pay_token the address of the token the user has and wants to trade
+  /// @param buy_token the address of the token the user wants in return for pay_token
+  /// @return Bytes32 identifier of the market
+  function getMarket(address pay_token, address buy_token) external pure returns (bytes32) {
+    return _getMarket(pay_token, buy_token);
   }
 
   /// @notice Get a user's current orders
@@ -215,12 +225,12 @@ contract PublicMarket is MatchingEngine {
   /// @param numItems The number of items to return IF less than market size
   /// @return uint256[] The array of pay_amounts for the top market orders
   /// @return uint256[] The array of buy_amounts for the top market orders
-  function getMarketOrders(
+  function _getMarketOrders(
     address pay_token,
     address buy_token,
     uint256 numItems
   ) external view returns (uint256[] memory, uint256[] memory) {
-    bytes32 market = getMarket(pay_token, buy_token);
+    bytes32 market = _getMarket(pay_token, buy_token);
 
     StructuredLinkedList.List storage list = marketLists[market];
 

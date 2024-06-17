@@ -62,7 +62,7 @@ contract PublicMarketHarness is PublicMarket {
   }
 
   function GetMarketMinPrice(address tokenOne, address tokenTwo) external view returns (uint256) {
-    bytes32 greenMarket = getMarket(tokenOne, tokenTwo);
+    bytes32 greenMarket = _getMarket(tokenOne, tokenTwo);
     (, uint256 greenId) = marketLists[greenMarket].getAdjacent(0, true);
     uint256 minPrice = orders[greenId].price;
     return minPrice;
@@ -80,8 +80,8 @@ contract PublicMarketHarness is PublicMarket {
     address tokenOne,
     address tokenTwo
   ) public returns (uint256 greenRemaining, uint256 greenWant) {
-    bytes32 greenMarket = getMarket(tokenOne, tokenTwo);
-    // bytes32 redMarket = getMarket(tokenTwo, tokenOne);
+    bytes32 greenMarket = _getMarket(tokenOne, tokenTwo);
+    // bytes32 redMarket = _getMarket(tokenTwo, tokenOne);
     (, uint256 greenId) = marketLists[greenMarket].getAdjacent(0, true);
     // (, uint256 redId) = marketLists[redMarket].getAdjacent(0, true);
     while (greenId != 0) {

@@ -32,13 +32,10 @@ contract SimpleMarket is IStructureInterface {
   error NotFound();
   error NoneBought();
   error BadInsert(uint256 pos);
+  error InvalidBuy();
 
-  /// @notice Get the market identifier for a token pair
-  /// @dev Each market has a unique bytes32 identifier based on the token pair
-  /// @param pay_token the address of the token the user has and wants to trade
-  /// @param buy_token the address of the token the user wants in return for pay_token
-  /// @return Bytes32 identifier of the market
-  function getMarket(address pay_token, address buy_token) public pure returns (bytes32) {
+  /// See PublicMarket:getMarket
+  function _getMarket(address pay_token, address buy_token) internal pure returns (bytes32) {
     return keccak256(abi.encode(pay_token, buy_token));
   }
 
@@ -50,14 +47,14 @@ contract SimpleMarket is IStructureInterface {
   /// @param buy_token the address of the token the user wants in return for pay_token
   /// @return Bytes32 identifier of the reverse market pair
   function _getReversedMarket(address pay_token, address buy_token) internal pure returns (bytes32) {
-    return getMarket(buy_token, pay_token);
+    return _getMarket(buy_token, pay_token);
   }
 
   /// @notice Stores an order in the appropriate market list
   /// @param order The order to record
   /// @return Uint256 The id of the recorded order
   function _recordOrder(OrdersLib.Order memory order) internal returns (uint256) {
-    require(order.owner != address(0), "Uh oh");
+    require(order.owner != address(0), "Bad Order Data"); // Sanity check
 
     uint256 thisOrder = nextOrderId;
     nextOrderId++;
@@ -65,7 +62,7 @@ contract SimpleMarket is IStructureInterface {
     orders[thisOrder] = order;
     userOrders[order.owner].pushBack(thisOrder);
 
-    bytes32 market = getMarket(order.pay_token, order.buy_token);
+    bytes32 market = _getMarket(order.pay_token, order.buy_token);
     StructuredLinkedList.List storage list = marketLists[market];
 
     uint256 spot = list.getSortedSpot(address(this), order.price);
@@ -86,10 +83,9 @@ contract SimpleMarket is IStructureInterface {
     uint256 pay_amount,
     address from
   ) internal returns (uint256) {
-    address thisContract = address(this);
-    uint256 balanceBefore = IERC20(pay_token).balanceOf(thisContract);
-    IERC20(pay_token).safeTransferFrom(from, thisContract, pay_amount);
-    return IERC20(pay_token).balanceOf(thisContract) - balanceBefore;
+    uint256 balanceBefore = IERC20(pay_token).balanceOf(address(this));
+    IERC20(pay_token).safeTransferFrom(from, address(this), pay_amount);
+    return IERC20(pay_token).balanceOf(address(this)) - balanceBefore;
   }
 
   /// @notice Send funds in userBalances to users
@@ -102,6 +98,7 @@ contract SimpleMarket is IStructureInterface {
       IERC20(token).safeTransfer(to, amount);
     }
   }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                  Interface Functions                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
