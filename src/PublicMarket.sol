@@ -35,6 +35,7 @@ contract PublicMarket is
     _disableInitializers();
   }
 
+  /// @notice Initialization for initial deployment
   function __PublicMarket_init(
     address _initialOwner,
     address _csrRecipient,
@@ -46,11 +47,13 @@ contract PublicMarket is
     __PublicMarket_init_unchained(_csrRecipient, _turnstile);
   }
 
+  /// @notice Initialization for initial deployment
+  /// @dev Crucial that nextOrderId is set to 1
   function __PublicMarket_init_unchained(
     address _csrRecipient,
     address _turnstile
   ) internal onlyInitializing {
-    // (bool ok, ) = _turnstile.call(abi.encodeWithSignature("register(address)", owner));
+    // (bool ok, ) = _turnstile.call(abi.encodeWithSignature("register(address)", _csrRecipient));
     // require(ok, "Failed to register");
     nextOrderId = 1;
   }
