@@ -1,14 +1,23 @@
-# Canto Free Public Orderbook:
-
 # Overview
 
 The PublicMarket contract form the main entrypoint for the set of smart contracts. They facilitate the creation, management, and execution of trading orders within a public marketplace. This documentation provides a detailed explanation of each contract's functions, parameters, and behaviors. 
 
-## Dependencies
-MatchingEngine: Inherits from SimpleMarket and contains the logic for matching user orders. <br />
-SimpleMarket: Manages the storage and retrieval of orders, user balances, and market identifiers. <br />
-StructuredLinkedList: A custom data structure for efficiently storing and retrieving orders. <br />
-OrdersLib: Contains utility functions and definitions related to orders. 
+The intention behind this orderbook is to eventually add it, or a version of it, to Canto's existing Free Public Infrastructure. The orderbook takes no fees from makers nor takers, and any EOA or protocol can add to and buy from the orderbook.
+
+One of the major problems with current orderbooks are that they are highly fragmented. An orderbook run by Coinbase cannot interact with an orderbook run by Binance, and the liquidity is halved. Protocols are incentivized to keep their own orderbooks to profit off the exorbitant fees, but doing so degrades user experience. Some protocols try to bridge this gap by aggregating different exchanges and finding the best prices for your tokens, but this is inefficient and costly. 
+
+This project is permissionless, and anyone can use it to trade any ERC20 tokens. Technically, any token can be listed on the orderbook as long as it has functions for transfer(address,uint256), transferFrom(address,address,uint256), and balanceOf(address). 
+
+## Introduction 
+
+### Orderbooks
+Orderbooks are a common tool used in finance to facilitate user transactions. They use a sorted list of maker orders for specific token pairs to match users who are trying to trade one token for another. Most exchanges use the orderbook model as they allow for consistent transactions, and can allow for more complex order types. 
+
+Most orderbooks in use today are heavily centralized entities with little transparency or assurance of their inner workings. The opaque manner in which they are run creates concerns about their "fairness" such that they may create fake volume and engage in price manipulation or insider trading. A decentralized orderbook where all orders are written onto the blockchain allows for transparent trading while maintaining many of the benefits of the orderbook model. 
+
+
+### Automated Market Makers
+Canto already has an AMM in the free public infrastructure, so should a public decentralized orderbook even exist? The AMM model is an innovative method in which to allow for freely accessable, decentralized transactions between token pairs. AMMs process all transactions automatically, without relying on third party buy/sell requests for the token being traded. This system has its benefits, but it also has its drawbacks. Some of the drawbacks of the AMM model include slippage, liquidity fragmentation, impermanent loss, and only supports simple order types. If you want to create a limit order, or have your order expire after a certain timelimit you are basically out of luck. Additionally, liquidity providers must supply liquidity for each supported token pair, and if a pair has little liquidity, traders can severly unbalance the pools creating significant losses.
 
 ## System Design
 
@@ -20,8 +29,15 @@ An important consideration is that after an order is filled, the funds are not d
 
 The orderbook should support any ERC-20 token. ERC-721 are not supported. You can immediately list a newly created token by it's address, no configuration needed. 
 
-## PublicMarket Contract
+## Dependencies
+MatchingEngine: Inherits from SimpleMarket and contains the logic for matching user orders. <br />
+SimpleMarket: Manages the storage and retrieval of orders, user balances, and market identifiers. <br />
+StructuredLinkedList: A custom data structure for efficiently storing and retrieving orders. <br />
+OrdersLib: Contains utility functions and definitions related to orders. 
 
+# Code
+
+## PublicMarket Contract
 
 ### makeOrderSimple
 
